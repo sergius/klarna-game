@@ -1,0 +1,25 @@
+*.class
+*.log
+*.jar
+*.bat
+*.sc
+
+# sbt specific
+sbt
+.cache/
+.history/
+.lib/
+dist/*
+target/
+lib_managed/
+project/boot/
+project/plugins/project/
+
+# IntelliJ specific
+*.idea
+.scala_dependencies
+.worksheet
+.sc
+
+# Mac specific
+.DS_Store
