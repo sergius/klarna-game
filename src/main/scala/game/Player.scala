@@ -1,5 +1,0 @@
-package game
-
-trait Player {
-
-}
