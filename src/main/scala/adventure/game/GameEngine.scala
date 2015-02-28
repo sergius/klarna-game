@@ -54,9 +54,6 @@ object GameEngine {
       case PickUp(itemName: String) => (Playing, None, Nil)//TODO Change this
       // TODO Pick up the item if found by name
 
-      case Quit =>
-        (Stopped, None, Nil)
-
       case _ => (Playing, gameOption, Nil)
     }
   }

@@ -1,15 +1,15 @@
 package adventure
 
 import adventure.game.Direction._
-import adventure.game._
 import adventure.game.GameEngine._
+import adventure.game._
 
 import scala.io.StdIn
 
 object Conf {
   import adventure.game.Building.RoomInfo
+  import adventure.game.Game.{MoveAction, PickUpAction}
   import adventure.game.{Building, Item}
-  import adventure.game.Game.{PickUpAction, MoveAction}
 
   object key extends MobileItem {
     override val matchItem: Option[Item] = None
@@ -58,12 +58,21 @@ object GameApp extends App with GameEngine with Terminal {
     CommandParser.exit | CommandParser.look |
       CommandParser.go | CommandParser.get
 
+  def printHelp(): Unit = {
+    println("=== Please use the following commands: ===\n\n" +
+      "1. 'look' - to see what's around" +
+      "2. 'go n' - to go North (s = South, e = East, w = West" +
+      "3. 'get key' - to pick up a key (or any other item)" +
+      "4. 'exit' - to quit playing\n\n"
+    )
+  }
+
   println("=== Starting Text Adventure game ... ===")
   applyEvent(StartWith(building, items, playerInitPos, gameOverPos))
 
   println("=== Game started ===")
   //TODO Print gameOption map (building)
-  //TODO Print the expected commands
+  printHelp()
   commandLoop()
 
   private def commandLoop(): Unit = {
@@ -93,6 +102,10 @@ object GameApp extends App with GameEngine with Terminal {
         }
       case Get(name) =>
         applyRespondContinue(PickUp(name))
+      case Unknown(s, m) =>
+        println(s"*** Unknown command: $s. Cause: $m")
+        printHelp()
+        commandLoop()
     }
   }
 
