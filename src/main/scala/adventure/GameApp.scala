@@ -11,18 +11,6 @@ object Conf {
   import adventure.game.{Building, Item}
   import adventure.game.Game.{PickUpAction, MoveAction}
 
-  val room1 = RoomInfo(1, "cold room")
-  val room2 = RoomInfo(2, "dusky room")
-  val room3 = RoomInfo(3, "hot room")
-  val room4 = RoomInfo(4, "bright room")
-  val room5 = RoomInfo(5, "nice garden")
-
-  val building = Building(room1)
-    .addRoom(room2, room1.id, East)
-    .addRoom(room3, room2.id, South)
-    .addRoom(room4, room3.id, West)
-    .addRoom(room5, room1.id, North)
-
   object key extends MobileItem {
     override val matchItem: Option[Item] = None
     override val matchAction: GameAction = PickUpAction
@@ -39,12 +27,29 @@ object Conf {
     override val onMatchMsg: String = s"You use a ${matchItem.get.name} to unlock a strong iron door."
   }
 
+  val room1 = RoomInfo(1, "cold room")
+  val room2 = RoomInfo(2, "dusky room")
+  val room3 = RoomInfo(3, "hot room")
+  val room4 = RoomInfo(4, "bright room")
+  val room5 = RoomInfo(5, "nice garden")
+
+  val building = Building(room1)
+    .addRoom(room2, room1.id, East)
+    .addRoom(room3, room2.id, South)
+    .addRoom(room4, room3.id, West)
+    .addRoom(room5, room1.id, North)
+
+  building.plan(room5.id).addItem(ironDoor)
+  building.plan(room3.id).addItem(key)
+
   val items = Map(key.name -> key, ironDoor.name -> ironDoor)
 
   val playerInitPos = building.plan(room1.id)
 
   val gameOverPos = building.plan(room5.id)
 }
+
+
 
 object GameApp extends App with GameEngine with Terminal {
   import Conf._

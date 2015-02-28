@@ -23,17 +23,6 @@ object GameEngine {
     def transition(event: Event, game: Option[Game]): (State, Option[Game], Seq[String])
   }
 
-  /**
-   *  Special object for the case that an event is received which doesn't produce
-   *  transition from current state
-   */
-  case object Ignoring extends State {
-    override def transition(event: Event, game: Option[Game]): (State, Option[Game], Seq[String]) = {
-
-      (Ignoring, None, Nil)
-    }
-  }
-
   case object Playing extends State {
     override def transition(event: Event, gameOption: Option[Game]): (State, Option[Game], Seq[String]) = event match {
       case Move(direction) =>
@@ -68,7 +57,7 @@ object GameEngine {
       case Quit =>
         (Stopped, None, Nil)
 
-      case _ => (Ignoring, None, Nil)
+      case _ => (Playing, gameOption, Nil)
     }
   }
 
@@ -76,7 +65,7 @@ object GameEngine {
     override def transition(event: Event, game: Option[Game]): (State, Option[Game], Seq[String]) = event match  {
       case StartWith(building, items, initPos, gameOverPos) =>
         (Playing, Some(Game(building, items, new Player(initPos), gameOverPos)), List()) //TODO Add feedback here
-      case _ => (Ignoring, None, Nil)
+      case _ => (Stopped, None, Nil)
     }
   }
 }
@@ -95,13 +84,8 @@ trait GameEngine {
 
     val (newState, newData, feedback) = state.transition(event, data)
 
-    newState match {
-      case Ignoring => // do nothing if the event not expected for state
-
-      case s: State =>
-        state = newState
-        data = newData
-        messages = feedback
-    }
+    state = newState
+    data = newData
+    messages = feedback
   }
 }

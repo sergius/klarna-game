@@ -38,6 +38,9 @@ trait ItemHolder {
 
   def items: Map[String, Item] = itemsHeld
 
+  def addItem(item: Item) =
+    itemsHeld += item.name -> item
+
   def hasItem(name: String): Boolean = items.get(name).nonEmpty
 
   def matchItemsWith(other: ItemHolder, action: GameAction): ItemMatch = {
