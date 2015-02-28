@@ -32,7 +32,7 @@ class BuildingSpec extends WordSpecLike with Matchers {
       updatedBuilding.plan.get(newRoomId) shouldNot be(None)
     }
 
-    "make neighbours to each other the new room and the existing one" in {
+    "make neighbours to each other: the new room and the existing one" in {
       val room1Id = 1
       val room2Id = 42
       val testDir = North
@@ -41,13 +41,13 @@ class BuildingSpec extends WordSpecLike with Matchers {
       val neighboursOfRoom1: Set[Neighbour] = building.plan(room1Id).neighbours
       neighboursOfRoom1 should have size 1
       val neighbour1: Neighbour = neighboursOfRoom1.head
-      neighbour1.room.id should equal(room2Id)
+      neighbour1.roomId should equal(room2Id)
       neighbour1.direction should equal(testDir)
 
       val neighboursOfRoom2: Set[Neighbour] = building.plan(room2Id).neighbours
       neighboursOfRoom2 should have size 1
       val neighbour2: Neighbour = neighboursOfRoom2.head
-      neighbour2.room.id should equal(room1Id)
+      neighbour2.roomId should equal(room1Id)
       neighbour2.direction should equal(Direction.oppositeTo(testDir))
     }
 

@@ -13,50 +13,60 @@ object Game {
   case class MoveFailure(feedback: Seq[String]) extends TryMove
   case object MoveImpossible extends TryMove
 
+  sealed trait TryPickUp
+  case object ItemNotFound extends TryPickUp
+  case object ItemPossiblyCollected extends TryPickUp
+  case object ItemNotMobile extends TryPickUp
+  case class PickUpFailure(feedback: Seq[String]) extends TryPickUp
+  case class PickUpAck(feedback: Seq[String]) extends TryPickUp
+
   def apply(building: Building, items: Map[String, Item], player: Player, gameOverPos: Room) =
     new Game(building, items, player, gameOverPos)
-
-  def impossibleMove(direction: Direction): String =
-    s"You cannot move to $direction"
-
-  val GameOver = "Congratulations, you've escaped!"
 }
 
-class Game(building: Building, items: Map[String, Item], player: Player, gameOverPos: Room) {
+class Game(val building: Building, items: Map[String, Item], player: Player, gameOverPos: Room) {
   import Game._
 
   def movePlayer(direction: Direction): TryMove = {
-    player.position.neighbours.find(n => n.direction == direction) match {
+    val foundNeighbours = player.position.neighbours
+    foundNeighbours.find(n => n.direction == direction) match {
       case None => 
         MoveImpossible
 
       case Some(neighbour) =>
-        player.matchItemsWith(neighbour.room, MoveAction) match {
-          case ItemMatchAck(success) =>
-            player.moveTo(neighbour.room)
-            if (player.position == gameOverPos)
-              MoveGameOver(success ++ player.lookAround() :+ GameOver)
-            else
-              MoveAck(success ++ player.lookAround)
+        player.matchItemsTo(building.plan(neighbour.roomId), MoveAction) match {
+          case ItemMatchAck(matched) =>
+            player.moveTo(building.plan(neighbour.roomId))
+            player.position.removeItems(matched)
+            val feedback: Seq[String] = matched.map(i => i.onMatchMsg) ++ player.lookAround()
+            if (player.position == gameOverPos) MoveGameOver(feedback)
+            else MoveAck(feedback)
 
-          case ItemMatchFailure(problems) =>
-            MoveFailure(problems)
+          case ItemMatchFailure(unmatched) =>
+            MoveFailure(unmatched.map(i => i.description))
         }
     }
   }
 
-  def lookUpItems: Map[String, Item] = player.position.items
+  def currentView: Seq[String] = player.lookAround()
 
-  def playerPosition: Room = player.position
-
-  def pickUpItem(name: String): String = {
-    player.position.items.get(name) match {
+  def pickUpItem(name: String): TryPickUp = {
+    player.position.itemByName(name) match {
       case None if player.hasItem(name) =>
-        s"There's no $name in the room. Perhaps you already picked it."
-
-      case None => s"There's no $name in the room."
-
-      case Some(item) => s"You pick up a $name"
+        ItemPossiblyCollected
+      case None =>
+        ItemNotFound
+      case Some(item) if !item.isMobile =>
+        ItemNotMobile
+      case Some(item) =>
+        player.matchItemsTo(player.position, PickUpAction, Seq(item)) match {
+          case ItemMatchAck(matched) =>
+            player.addItems(matched)
+            player.position.removeItems(matched)
+            PickUpAck(matched.map(i => i.onMatchMsg))
+          case ItemMatchFailure(unmatched) =>
+            PickUpFailure(unmatched.map(i => i.description))
+        }
     }
   }
 }

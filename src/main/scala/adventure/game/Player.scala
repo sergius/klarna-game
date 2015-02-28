@@ -1,12 +1,10 @@
 package adventure.game
 
-object Player {
-  val LookAroundMsg = "I can also see the following"
-}
-
 class Player(initialPosition: Room) extends ItemHolder {
-import Player._
-  var currentPosition = initialPosition
+
+  private val LookAroundMsg = "You can also see the following:"
+
+  private var currentPosition = initialPosition
 
   def position: Room = currentPosition
 

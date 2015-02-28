@@ -1,18 +1,17 @@
 package adventure.game
 
 
-/*  StateName(Event, StateData) ->
-  .. code for actions here ...
-  {next_state, StateName', StateData'}*/
-
-
-sealed trait Event
-
 object GameEngine {
-  import adventure.game.Game.{MoveGameOver, MoveAck, MoveFailure, MoveImpossible}
+  import adventure.game.Game._
 
-  def InvalidMove(direction: Direction) = s"You cannot move to $direction"
+  val GameOver = "Congratulations, you've escaped!"
 
+  def moveImpossibleMsg(direction: Direction) = s"You cannot move to $direction"
+  def itemNotFoundMsg(name: String) = s"Item $name cannot be found"
+  def itemNotMobileMsg(name: String) = s"Item $name cannot be collected"
+  def itemPossiblyCollectedMsg(name: String) = s"Item $name not found, perhaps you've already collected it."
+
+  sealed trait Event
   case class StartWith(building: Building, items: Map[String, Item], initPos: Room, gameOverPos: Room) extends Event
   case class Move(direction: Direction) extends Event
   case class PickUp(itemName: String) extends Event
@@ -28,41 +27,44 @@ object GameEngine {
       case Move(direction) =>
         gameOption.get.movePlayer(direction) match {
           case MoveImpossible =>
-            (Playing, gameOption, List(InvalidMove(direction)))
+            (Playing, gameOption, List(moveImpossibleMsg(direction)))
           case MoveFailure(problems) =>
             (Playing, gameOption, problems)
           case MoveAck(messages) =>
             (Playing, gameOption, messages)
           case MoveGameOver(messages) =>
-            (Stopped, gameOption, messages)
+            (Stopped, gameOption, messages :+ GameOver)
         }
 
+      case LookAround =>
+        (Playing, gameOption, gameOption.get.currentView)
 
-      //TODO send to gameOption the new location and get a new state
-      //TODO Apply look()
-      //TODO if not finished => (Playing, gameOption new state)
-      //TODO else (Finished, gameOption new state)
+      case PickUp(itemName: String) =>
+        gameOption.get.pickUpItem(itemName) match {
+          case ItemNotFound =>
+            (Playing, gameOption, List(itemNotFoundMsg(itemName)))
+          case ItemNotMobile =>
+            (Playing, gameOption, List(itemNotMobileMsg(itemName)))
+          case ItemPossiblyCollected =>
+            (Playing, gameOption, List(itemPossiblyCollectedMsg(itemName)))
+          case PickUpFailure(problems) =>
+            (Playing, gameOption, problems)
+          case PickUpAck(messages) =>
+            (Playing, gameOption, messages)
+        }
 
-      case LookAround => (Playing, None, Nil) //TODO Change this
-        /*newData match {
-          case None => Nil
-          case Some(gameOption) =>
-            gameOption.playerPosition.description :: gameOption.lookUpItems.toList.map(i => i.description)
-        }*/
-      //TODO Print the descriptions messages of the room and items
-
-      case PickUp(itemName: String) => (Playing, None, Nil)//TODO Change this
-      // TODO Pick up the item if found by name
-
-      case _ => (Playing, gameOption, Nil)
+      case _ => //ignore anything else 
+        (Playing, gameOption, Nil)
     }
   }
 
   case object Stopped extends State {
     override def transition(event: Event, game: Option[Game]): (State, Option[Game], Seq[String]) = event match  {
       case StartWith(building, items, initPos, gameOverPos) =>
-        (Playing, Some(Game(building, items, new Player(initPos), gameOverPos)), List()) //TODO Add feedback here
-      case _ => (Stopped, None, Nil)
+        val newGame = Game(building, items, new Player(initPos), gameOverPos)
+        (Playing, Some(newGame), newGame.currentView)
+      case _ =>
+        (Stopped, None, Nil)
     }
   }
 }

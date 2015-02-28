@@ -29,8 +29,8 @@ trait FixedItem extends Item {
 }
 
 sealed trait ItemMatch
-case class ItemMatchAck(messages: Seq[String]) extends ItemMatch
-case class ItemMatchFailure(messages: Seq[String]) extends ItemMatch
+case class ItemMatchAck(matched: Seq[Item]) extends ItemMatch
+case class ItemMatchFailure(unmatched: Seq[Item]) extends ItemMatch
 
 trait ItemHolder {
 
@@ -38,21 +38,40 @@ trait ItemHolder {
 
   def items: Map[String, Item] = itemsHeld
 
-  def addItem(item: Item) =
-    itemsHeld += item.name -> item
-
-  def hasItem(name: String): Boolean = items.get(name).nonEmpty
-
-  def matchItemsWith(other: ItemHolder, action: GameAction): ItemMatch = {
-    val ownEventItems = items.values.filter(item => item.matchAction == action).toSeq
-    val otherEventItems = other.items.values.filter(item => item.matchAction == action).toSeq
-    val matches = otherEventItems.foldLeft((Seq.empty[String], Seq.empty[String])) {(acc, item) =>
-      if (item.matchItem.isEmpty || item.matchItem.map(i => ownEventItems.contains(i)).get)
-        (acc._1 :+ item.onMatchMsg, acc._2)
-      else
-        (acc._1, acc._2 :+ item.description)
+  def addItems(items: Seq[Item]) =
+    items foreach { item =>
+      itemsHeld += item.name -> item  
     }
-    if (matches._2.isEmpty) ItemMatchAck(matches._1)
-    else ItemMatchFailure(matches._2)
+
+  def removeItems(items: Seq[Item]) =
+    items foreach { item =>
+      itemsHeld -= item.name
+    }
+  
+  def itemByName(name: String): Option[Item] =
+    items.find{case (key, _) => key.contains(name)}.map(el => el._2)
+  
+  def hasItem(name: String): Boolean =
+    itemByName(name).nonEmpty
+
+  def matchItemsTo(other: ItemHolder, action: GameAction, specificItems: Seq[Item] = Nil): ItemMatch = {
+
+    def filterOtherItems: Seq[Item] = specificItems match {
+      case Nil =>
+        other.items.values.filter(item => item.matchAction == action).toSeq
+      case _ =>
+        other.items.values.filter(item => specificItems.contains(item) && item.matchAction == action).toSeq
+    }
+    
+    val otherItems = filterOtherItems
+    
+    val unmatched = otherItems.foldLeft(Seq.empty[Item]) {(acc, item) =>
+      if (item.matchItem.nonEmpty && !item.matchItem.map(i => itemsHeld.values.toSeq.contains(i)).get)
+        acc :+ item
+      else
+        acc
+    }
+    if (unmatched.isEmpty) ItemMatchAck(otherItems)
+    else ItemMatchFailure(unmatched)
   }
 }

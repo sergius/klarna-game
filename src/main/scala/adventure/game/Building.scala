@@ -37,6 +37,8 @@ sealed trait Building {
    *         not found, no changes are applied and the same Building is returned.
    */
   def addRoom(newRoomInfo: RoomInfo, toRoom: Int, side: Direction): Building
+
+  def addNeighbour(roomId: Int, neighbour: Neighbour): Building
 }
 
 sealed trait Room extends ItemHolder {
@@ -50,33 +52,48 @@ sealed trait Room extends ItemHolder {
 
 object Building {
 
-  case class RoomInfo(id: Int, description: String = "")
-  case class Neighbour(room: Room, direction: Direction)
-
   def apply(roomInfo: RoomInfo): Building =
-    new BuildingImpl(Map(roomInfo.id -> new RoomImpl(roomInfo, Set.empty[Neighbour])))
+    new BuildingImpl(Map(roomInfo.id -> new RoomImpl(roomInfo.id, roomInfo.description, Set.empty[Neighbour])))
+
+  case class RoomInfo(id: Int, description: String = "")
+
+  case class Neighbour(roomId: Int, direction: Direction)
+
+  private class RoomImpl(val id: Int, val description: String, val neighbours: Set[Neighbour]) extends Room
 
   private class BuildingImpl(val plan: Map[Int, Room]) extends Building {
 
     override def addRoom(newRoomInfo: RoomInfo, toRoom: Int, side: Direction): Building =
       plan.get(toRoom) match {
-
-        case None => this
-
         case Some(room) =>
-          val newRoom =
-            new RoomImpl(newRoomInfo, Set(Neighbour(room, Direction.oppositeTo(side))))
+          val updatedPlan =
+            plan.updated(room.id,
+              new RoomImpl(room.id, room.description, room.neighbours + Neighbour(newRoomInfo.id, side)))
+              .updated(newRoomInfo.id,
+                new RoomImpl(newRoomInfo.id, newRoomInfo.description,
+                  Set(Neighbour(room.id, Direction.oppositeTo(side)))))
 
-          val updatedRoom =
-            new RoomImpl(RoomInfo(room.id, room.description), room.neighbours + new Neighbour(newRoom, side))
 
-          new BuildingImpl(plan + (room.id -> updatedRoom) + (newRoomInfo.id -> newRoom))
+          new BuildingImpl(updatedPlan)
+
+
+        case _ => this
       }
-  }
 
-  private class RoomImpl(val roomInfo: RoomInfo, val neighbours: Set[Neighbour]) extends Room {
-    lazy val id = roomInfo.id
-    lazy val description = roomInfo.description
+    override def addNeighbour(roomId: Int, neighbour: Neighbour): Building =
+      (plan.get(roomId), plan.get(neighbour.roomId)) match {
+        case (Some(room), Some(neigh)) =>
+          val updatedPlan =
+            plan.updated(room.id,
+              new RoomImpl(room.id, room.description, room.neighbours + neighbour))
+              .updated(neigh.id,
+                new RoomImpl(neigh.id, neigh.description, neigh.neighbours +
+                  Neighbour(room.id, Direction.oppositeTo(neighbour.direction))))
+
+          new BuildingImpl(updatedPlan)
+
+        case _ => this
+      }
   }
 
 }

@@ -1,5 +1,6 @@
 package adventure
 
+import adventure.game.Building.Neighbour
 import adventure.game.Direction._
 import adventure.game.GameEngine._
 import adventure.game._
@@ -27,20 +28,21 @@ object Conf {
     override val onMatchMsg: String = s"You use a ${matchItem.get.name} to unlock a strong iron door."
   }
 
-  val room1 = RoomInfo(1, "cold room")
-  val room2 = RoomInfo(2, "dusky room")
-  val room3 = RoomInfo(3, "hot room")
-  val room4 = RoomInfo(4, "bright room")
-  val room5 = RoomInfo(5, "nice garden")
+  val room1 = RoomInfo(1, "A cold room")
+  val room2 = RoomInfo(2, "A dusky room")
+  val room3 = RoomInfo(3, "A hot room")
+  val room4 = RoomInfo(4, "A bright room")
+  val room5 = RoomInfo(5, "A nice garden")
 
   val building = Building(room1)
     .addRoom(room2, room1.id, East)
     .addRoom(room3, room2.id, South)
     .addRoom(room4, room3.id, West)
     .addRoom(room5, room1.id, North)
+    .addNeighbour(room1.id, Neighbour(room4.id, South))
 
-  building.plan(room5.id).addItem(ironDoor)
-  building.plan(room3.id).addItem(key)
+  building.plan(room5.id).addItems(List(ironDoor))
+  building.plan(room3.id).addItems(List(key))
 
   val items = Map(key.name -> key, ironDoor.name -> ironDoor)
 
@@ -58,30 +60,35 @@ object GameApp extends App with GameEngine with Terminal {
     CommandParser.exit | CommandParser.look |
       CommandParser.go | CommandParser.get
 
-  def printHelp(): Unit = {
-    println("=== Please use the following commands: ===\n\n" +
-      "1. 'look' - to see what's around" +
-      "2. 'go n' - to go North (s = South, e = East, w = West" +
-      "3. 'get key' - to pick up a key (or any other item)" +
-      "4. 'exit' - to quit playing\n\n"
-    )
-  }
 
   println("=== Starting Text Adventure game ... ===")
   applyEvent(StartWith(building, items, playerInitPos, gameOverPos))
 
-  println("=== Game started ===")
   //TODO Print gameOption map (building)
   printHelp()
+  printFeedback()
   commandLoop()
+
+  def printHelp(): Unit = {
+    println("=== Please use the following commands: ===\n\n" +
+      "1. 'look' - to see what's around\n" +
+      "2. 'go n' - to go North (s = South, e = East, w = West\n" +
+      "3. 'get key' - to pick up a key (or any other item)\n" +
+      "4. 'exit' - to quit playing\n\n"
+    )
+  }
+
+  private def printFeedback(): Unit =
+    feedback foreach(message => {
+      println()
+      println(s"$message")
+      println()
+    })
 
   private def commandLoop(): Unit = {
     import Command._
 
     def applyRespondContinue(event: Event): Unit = {
-      def printFeedback(): Unit =
-        feedback foreach(message => println(s"*** $message"))
-
       applyEvent(event)
       printFeedback()
       if (currentState != Stopped) commandLoop()
@@ -102,8 +109,8 @@ object GameApp extends App with GameEngine with Terminal {
         }
       case Get(name) =>
         applyRespondContinue(PickUp(name))
-      case Unknown(s, m) =>
-        println(s"*** Unknown command: $s. Cause: $m")
+      case Unknown(s, _) =>
+        println(s"*** Unknown command: $s.")
         printHelp()
         commandLoop()
     }
