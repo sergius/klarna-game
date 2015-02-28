@@ -1,8 +1,6 @@
 package adventure.game
 
-import adventure.game.Building.Neighbour
-
-sealed trait Direction
+import adventure.game.Building.{Neighbour, RoomInfo}
 
 object Direction {
 
@@ -22,13 +20,15 @@ object Direction {
   }
 }
 
+sealed trait Direction
+
 sealed trait Building {
 
   val plan: Map[Int, Room]
 
   /**
    * Adds a room to a Building, returning a new Building.
-   * @param newRoomId The id for the new room.
+   * @param newRoomInfo The details for the new room
    * @param toRoom The id of some existing room. The new room will be added next to it.
    *               Care should be taken with this parameter: if a room with this id
    *               is not found in the Building plan, the new room will not be added.
@@ -36,10 +36,10 @@ sealed trait Building {
    * @return A new Building containing the added room. If the id of the existing room is
    *         not found, no changes are applied and the same Building is returned.
    */
-  def addRoom(toRoom: Int, side: Direction)(newRoomId: Int, description: String = ""): Building
+  def addRoom(newRoomInfo: RoomInfo, toRoom: Int, side: Direction): Building
 }
 
-sealed trait Room {
+sealed trait Room extends ItemHolder {
 
   val id: Int
 
@@ -50,24 +50,33 @@ sealed trait Room {
 
 object Building {
 
-  type Neighbour = (Room, Direction)
+  case class RoomInfo(id: Int, description: String = "")
+  case class Neighbour(room: Room, direction: Direction)
 
-  def apply(initRoomId: Int, description: String = ""): Building =
-    new BuildingImpl(Map(initRoomId -> new RoomImpl(initRoomId, description, Set.empty[Neighbour])))
+  def apply(roomInfo: RoomInfo): Building =
+    new BuildingImpl(Map(roomInfo.id -> new RoomImpl(roomInfo, Set.empty[Neighbour])))
 
   private class BuildingImpl(val plan: Map[Int, Room]) extends Building {
 
-    override def addRoom(toRoom: Int, side: Direction)
-                        (newRoomId: Int, description: String = ""): Building = plan.get(toRoom) match {
-      case None => this
-      case Some(room) =>
-        val newRoom = new RoomImpl(newRoomId, description, Set(new Neighbour(room, Direction.oppositeTo(side))))
-        val updatedRoom = new RoomImpl(room.id, description, room.neighbours + new Neighbour(newRoom, side))
-        val newPlan = plan + (room.id -> updatedRoom) + (newRoomId -> newRoom)
-        new BuildingImpl(newPlan)
-    }
+    override def addRoom(newRoomInfo: RoomInfo, toRoom: Int, side: Direction): Building =
+      plan.get(toRoom) match {
+
+        case None => this
+
+        case Some(room) =>
+          val newRoom =
+            new RoomImpl(newRoomInfo, Set(Neighbour(room, Direction.oppositeTo(side))))
+
+          val updatedRoom =
+            new RoomImpl(RoomInfo(room.id, room.description), room.neighbours + new Neighbour(newRoom, side))
+
+          new BuildingImpl(plan + (room.id -> updatedRoom) + (newRoomInfo.id -> newRoom))
+      }
   }
 
-  private class RoomImpl(val id: Int, val description: String = "", val neighbours: Set[Neighbour]) extends Room
+  private class RoomImpl(val roomInfo: RoomInfo, val neighbours: Set[Neighbour]) extends Room {
+    lazy val id = roomInfo.id
+    lazy val description = roomInfo.description
+  }
 
 }
