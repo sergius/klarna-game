@@ -20,12 +20,16 @@ object Game {
   case class PickUpFailure(feedback: Seq[String]) extends TryPickUp
   case class PickUpAck(feedback: Seq[String]) extends TryPickUp
 
-  def apply(building: Building, items: Map[String, Item], player: Player, gameOverPos: Room) =
-    new Game(building, items, player, gameOverPos)
+  def apply(building: Building, initPos: Room, gameOverPos: Room) =
+    new Game(building, initPos, gameOverPos)
 }
 
-class Game(val building: Building, items: Map[String, Item], player: Player, gameOverPos: Room) {
+class Game(val building: Building, initPos: Room, gameOverPos: Room) {
   import Game._
+
+  private val player = new Player(initPos)
+
+  def currentView: Seq[String] = player.lookAround()
 
   def movePlayer(direction: Direction): TryMove = {
     val foundNeighbours = player.position.neighbours
@@ -38,7 +42,9 @@ class Game(val building: Building, items: Map[String, Item], player: Player, gam
           case ItemMatchAck(matched) =>
             player.moveTo(building.plan(neighbour.roomId))
             player.position.removeItems(matched)
-            val feedback: Seq[String] = matched.map(i => i.onMatchMsg) ++ player.lookAround()
+            val feedback: Seq[String] =
+              matched.map(i => i.onMatchMsg) ++ player.lookAround()
+
             if (player.position == gameOverPos) MoveGameOver(feedback)
             else MoveAck(feedback)
 
@@ -47,8 +53,6 @@ class Game(val building: Building, items: Map[String, Item], player: Player, gam
         }
     }
   }
-
-  def currentView: Seq[String] = player.lookAround()
 
   def pickUpItem(name: String): TryPickUp = {
     player.position.itemByName(name) match {

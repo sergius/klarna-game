@@ -44,8 +44,6 @@ object Conf {
   building.plan(room5.id).addItems(List(ironDoor))
   building.plan(room3.id).addItems(List(key))
 
-  val items = Map(key.name -> key, ironDoor.name -> ironDoor)
-
   val playerInitPos = building.plan(room1.id)
 
   val gameOverPos = building.plan(room5.id)
@@ -62,7 +60,7 @@ object GameApp extends App with GameEngine with Terminal {
 
 
   println("=== Starting Text Adventure game ... ===")
-  applyEvent(StartWith(building, items, playerInitPos, gameOverPos))
+  applyEvent(StartWith(building, playerInitPos, gameOverPos))
 
   //TODO Print gameOption map (building)
   printHelp()

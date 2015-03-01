@@ -12,7 +12,8 @@ object GameEngine {
   def itemPossiblyCollectedMsg(name: String) = s"Item $name not found, perhaps you've already collected it."
 
   sealed trait Event
-  case class StartWith(building: Building, items: Map[String, Item], initPos: Room, gameOverPos: Room) extends Event
+  case class StartWith(building: Building,
+                       initPos: Room, gameOverPos: Room) extends Event
   case class Move(direction: Direction) extends Event
   case class PickUp(itemName: String) extends Event
   case object LookAround extends Event
@@ -60,8 +61,8 @@ object GameEngine {
 
   case object Stopped extends State {
     override def transition(event: Event, game: Option[Game]): (State, Option[Game], Seq[String]) = event match  {
-      case StartWith(building, items, initPos, gameOverPos) =>
-        val newGame = Game(building, items, new Player(initPos), gameOverPos)
+      case StartWith(building, initPos, gameOverPos) =>
+        val newGame = Game(building, initPos, gameOverPos)
         (Playing, Some(newGame), newGame.currentView)
       case _ =>
         (Stopped, None, Nil)
@@ -77,6 +78,7 @@ trait GameEngine {
   private var messages = Seq.empty[String]
 
   protected def currentState = state
+  protected def currentData = data
   protected def feedback = messages
 
   protected def applyEvent(event: Event) = {

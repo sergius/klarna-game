@@ -1,7 +1,7 @@
 package adventure.game
 
 import adventure.game.Building.{Neighbour, RoomInfo}
-import adventure.game.Direction.North
+import adventure.game.Direction.{South, East, North}
 import org.scalatest.{Matchers, WordSpecLike}
 
 class BuildingSpec extends WordSpecLike with Matchers {
@@ -55,13 +55,61 @@ class BuildingSpec extends WordSpecLike with Matchers {
       val room1Id = 1
       val room2Id = 42
       val wrongId = 0
-      val testDir = North
+      val direction = North
       val initialBuilding = Building(RoomInfo(room1Id))
-      val updatedBuilding = initialBuilding.addRoom(RoomInfo(room2Id), wrongId, testDir)
+      val updatedBuilding = initialBuilding.addRoom(RoomInfo(room2Id), wrongId, direction)
 
       updatedBuilding should equal(initialBuilding)
     }
+  }
 
+  "When adding a neighbour to a room (both have to be existing Rooms) it" must {
+    "return a new Building with the updated plan, with two rooms as mutual neighbours" in {
+
+      //scheme of proposed structure
+
+      // = as graph =            = as map =
+      //
+      //          - room2         --- ------
+      //         |               | r | room2|
+      // room1 --                | o |      |
+      //         |               | o |------
+      //          - room3        | m |      |
+      //                         | 1 | room3|
+      //                          --- ------
+
+      val room1 = RoomInfo(1, "test room 1")
+      val room2 = RoomInfo(2, "test room 2")
+      val room3 = RoomInfo(3, "test room 3")
+      val direction1 = East
+      val direction2 = South
+      val initialBuilding = Building(room1).addRoom(room2, room1.id, direction1).addRoom(room3, room1.id, direction1)
+      val updatedBuilding = initialBuilding.addNeighbour(room2.id, Neighbour(room3.id, direction2))
+
+      updatedBuilding should not equal initialBuilding
+
+      updatedBuilding.plan(room2.id).neighbours should have size 2
+      updatedBuilding.plan(room2.id).neighbours should contain
+        only(Neighbour(room1.id, Direction.oppositeTo(direction1)), Neighbour(room3.id, direction2))
+      updatedBuilding.plan(room3.id).neighbours should contain
+        only(Neighbour(room1.id, Direction.oppositeTo(direction1)), Neighbour(room2.id, Direction.oppositeTo(direction2)))
+    }
+
+    "if any of the Room's id-s, passed as parameters, don't correspond to existing rooms," +
+      "no changes are applied and the same Building is returned" in {
+      val room1 = RoomInfo(1, "test room 1")
+      val room2 = RoomInfo(2, "test room 2")
+      val nonexistent = RoomInfo(3, "test room 3")
+      val direction1 = East
+      val direction2 = South
+      val initialBuilding = Building(room1).addRoom(room2, room1.id, direction1)
+
+      val updatedBuilding1 = initialBuilding.addNeighbour(room2.id, Neighbour(nonexistent.id, direction2))
+      updatedBuilding1 shouldBe initialBuilding
+
+      val updatedBuilding2 = initialBuilding.addNeighbour(nonexistent.id, Neighbour(room2.id, direction2))
+      updatedBuilding2 shouldBe initialBuilding
+    }
   }
 
 }

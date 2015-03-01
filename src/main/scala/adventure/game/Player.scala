@@ -12,9 +12,11 @@ class Player(initialPosition: Room) extends ItemHolder {
     currentPosition = room
 
   def lookAround(): Seq[String] = {
-    val itemsDescription = currentPosition.items.values.toSeq.map(item => item.description)
-    if (itemsDescription.nonEmpty) currentPosition.description +: LookAroundMsg +: itemsDescription
-    else Seq(currentPosition.description)
+    val itemsDescription = currentPosition.items.map(item => item.description)
+    if (itemsDescription.nonEmpty)
+      currentPosition.description +: LookAroundMsg +: itemsDescription
+    else
+      Seq(currentPosition.description)
   }
 
 }
