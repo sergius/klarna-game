@@ -8,11 +8,11 @@
 
          |
 
-        A ­  B
+        A - B
 
         |   |
 
-       D ­ C
+        D - C
 ```
 
 * The player starts in room A
@@ -66,9 +66,9 @@ Defining the concepts and delimiting the responsibilities is probably the most c
    * Keep it as simple as possible (but not simpler than that :) )
    * Make it as generic as possible, i.e. easy to reuse and/or refactor
    * Build the robustness into the design
-        - giving it a clear interface
-        - avoiding confusions in use
-        - avoiding the use of exceptions in error treatment
+       - giving it a clear interface
+       - avoiding confusions in use
+       - avoiding the use of exceptions in error treatment
 
 I also tried to keep the code as functional as possible, pushing the mutable parts to specific thin structures.
 
@@ -148,7 +148,7 @@ However, this wouldn't work well for multi-player versions, requiring some refac
 
 ### Game logic: Game & GameEngine
 
-The `Game` holds the *what* of the application, the logic of what happens in its "world", the possible actions and the state. The `GameEngine` holds the *when* and *why*, i.e. it controls the logic of applications' events and the transitions from one `Game`'s state to another.
+The `Game` holds the *what* of the application, the logic of what happens in its "world", the possible actions and the state. The `GameEngine` holds the *when* and *why*, i.e. it controls the logic of application's events and the transitions from one `Game`'s state to another.
 
 #### Game
 
@@ -191,13 +191,13 @@ There are two `State`s defined for this version of the game: `Stopped` and `Play
 
 ## What can be improved
 
-In a production ready application, I would take away from code all the `String`s, like messages, names, tags, etc., placing them in some specific configuration files (e.g. text-adventure.properties).
+In a production ready application, I would take away from code all the `String`s, like messages, names, tags, etc., placing them in some specific configuration files (e.g. `text-adventure.properties`).
 
 If more than one game were supposed to be developed, the code of the basic structures (e.g.`Game`, `Player`) could be refactored to more generic interfaces, as to be reused in any of the future applications.
 
 ## What isn't done
 
-When the game is initiated or before that, when preparing its parameters, it would be good to have some verification of game's termination. This would check that exists a path which makes possible to reach from the initial position in the game to the ending one. This wasn't implemented here.
+When the game is initiated or before that, when preparing its parameters, it would be good to have some verification of game's termination. This would check that exists a path which makes possible to reach from the initial position in the game to the ending one, and warn (or not start the game) if it isn't possible. This wasn't implemented here.
 
 ## How to run it
 
@@ -209,11 +209,11 @@ I created and added a new game, using the developed API. It has the following bu
 
  ```
 
-         A - B - C
+        A - B - C
 
         |   |
 
-       D ­ E - F
+        D - E - F
 
 
  ```
