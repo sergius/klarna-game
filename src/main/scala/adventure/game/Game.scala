@@ -6,6 +6,7 @@ object Game {
 
   object MoveAction extends GameAction
   object PickUpAction extends GameAction
+  object OpenAction extends GameAction
 
   sealed trait TryMove
   case class MoveAck(feedback: Seq[String]) extends TryMove
@@ -13,12 +14,18 @@ object Game {
   case class MoveFailure(feedback: Seq[String]) extends TryMove
   case object MoveImpossible extends TryMove
 
+  case class ItemNotFound()
+
   sealed trait TryPickUp
-  case object ItemNotFound extends TryPickUp
   case object ItemPossiblyCollected extends TryPickUp
   case object ItemNotMobile extends TryPickUp
   case class PickUpFailure(feedback: Seq[String]) extends TryPickUp
   case class PickUpAck(feedback: Seq[String]) extends TryPickUp
+
+  sealed trait TryOpen
+  case object ItemNotHolder extends TryOpen
+  case class OpenFailure(feedback: Seq[String]) extends TryOpen
+  case class OpenAck(feedback: Seq[String]) extends TryOpen
 
   def apply(building: Building, initPos: Room, gameOverPos: Room) =
     new Game(building, initPos, gameOverPos)
@@ -59,11 +66,13 @@ class Game(val building: Building, initPos: Room, gameOverPos: Room) {
       case None if player.hasItem(name) =>
         ItemPossiblyCollected
       case None =>
-        ItemNotFound
+        new ItemNotFound with TryPickUp
       case Some(item) if !item.isMobile =>
         ItemNotMobile
       case Some(item) =>
         player.matchItemsTo(player.position, PickUpAction, Seq(item)) match {
+          case ItemMatchAck(matched) if matched.isEmpty =>
+            PickUpFailure(Seq(item.description))
           case ItemMatchAck(matched) =>
             player.addItems(matched)
             player.position.removeItems(matched)
@@ -71,6 +80,28 @@ class Game(val building: Building, initPos: Room, gameOverPos: Room) {
           case ItemMatchFailure(unmatched) =>
             PickUpFailure(unmatched.map(i => i.description))
         }
+    }
+  }
+
+  def openItem(name: String): TryOpen = {
+    player.position.itemByName(name) match {
+      case None =>
+        new ItemNotFound with TryOpen
+      case Some(item) => item match {
+        case holder: ItemHolder =>
+          player.matchItemsTo(player.position, OpenAction, Seq(holder)) match {
+            case ItemMatchAck(matched) if matched.isEmpty =>
+              OpenFailure(List(holder.description))
+            case ItemMatchAck(matched) =>
+              player.position.addItems(holder.items)
+              holder.removeItems(holder.items)
+              OpenAck(matched.map(i => i.onMatchMsg))
+            case ItemMatchFailure(unmatched) =>
+              OpenFailure(unmatched.map(i => i.description))
+          }
+        case _ =>
+          ItemNotHolder
+      }
     }
   }
 }

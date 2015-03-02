@@ -7,15 +7,19 @@ object GameEngine {
   val GameOver = "Congratulations, you've escaped!"
 
   def moveImpossibleMsg(direction: Direction) = s"You cannot move to $direction"
-  def itemNotFoundMsg(name: String) = s"Item $name cannot be found"
-  def itemNotMobileMsg(name: String) = s"Item $name cannot be collected"
-  def itemPossiblyCollectedMsg(name: String) = s"Item $name not found, perhaps you've already collected it."
+  def itemNotFoundMsg(name: String) = s"The $name wasn't found"
+  def itemNotMobileMsg(name: String) = s"Is impossible to pick up a $name"
+  def itemPossiblyCollectedMsg(name: String) = s"The $name wasn't found, perhaps you've already collected it."
+  def itemsNotPickedUpMsg(items: Seq[String]) = s"You couldn't pick up: ${items.mkString(", ")}"
+  def itemNotHolderMsg(name: String) = s"Is impossible to open a $name"
+  def itemsNotOpenMsg(items: Seq[String]) = s"You couldn't open: ${items.mkString(", ")}"
 
   sealed trait Event
   case class StartWith(building: Building,
                        initPos: Room, gameOverPos: Room) extends Event
   case class Move(direction: Direction) extends Event
   case class PickUp(itemName: String) extends Event
+  case class OpenHolder(itemName: String) extends Event
   case object LookAround extends Event
   case object Quit extends Event
 
@@ -42,15 +46,27 @@ object GameEngine {
 
       case PickUp(itemName: String) =>
         gameOption.get.pickUpItem(itemName) match {
-          case ItemNotFound =>
+          case i:ItemNotFound =>
             (Playing, gameOption, List(itemNotFoundMsg(itemName)))
           case ItemNotMobile =>
             (Playing, gameOption, List(itemNotMobileMsg(itemName)))
           case ItemPossiblyCollected =>
             (Playing, gameOption, List(itemPossiblyCollectedMsg(itemName)))
           case PickUpFailure(problems) =>
-            (Playing, gameOption, problems)
+            (Playing, gameOption, List(itemsNotPickedUpMsg(problems)))
           case PickUpAck(messages) =>
+            (Playing, gameOption, messages)
+        }
+
+      case OpenHolder(itemName: String) =>
+        gameOption.get.openItem(itemName) match {
+          case i: ItemNotFound =>
+            (Playing, gameOption, List(itemNotFoundMsg(itemName)))
+          case ItemNotHolder =>
+            (Playing, gameOption, List(itemNotHolderMsg(itemName)))
+          case OpenFailure(problems) =>
+            (Playing, gameOption, List(itemsNotOpenMsg(problems)))
+          case OpenAck(messages) =>
             (Playing, gameOption, messages)
         }
 

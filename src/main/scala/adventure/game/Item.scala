@@ -77,9 +77,10 @@ trait ItemHolder {
         other.items.filter(item =>
           specificItems.contains(item) && item.matchAction == action)
     }
-    
+
+
     val otherItems = filterOtherItems
-    
+
     val unmatched = otherItems.foldLeft(Seq.empty[Item]) {(acc, item) =>
       if (item.matchItem.nonEmpty &&
           !item.matchItem.map(i => itemsHeld.values.toSeq.contains(i)).get)
@@ -87,6 +88,7 @@ trait ItemHolder {
       else
         acc
     }
+
     if (unmatched.isEmpty) ItemMatchAck(otherItems)
     else ItemMatchFailure(unmatched)
   }

@@ -79,7 +79,7 @@ class GameSpec extends WordSpecLike with Matchers with BeforeAndAfter {
 
       val pickUpResult = game.pickUpItem(mobile1.name)
 
-      pickUpResult shouldBe ItemNotFound
+      pickUpResult shouldBe ItemNotFound()
     }
 
     "if the Item is not mobile: return ItemNotMobile" in {

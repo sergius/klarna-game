@@ -24,6 +24,8 @@
     * get [item]
 * The game ends when the player manages to reach room E
 
+__*Note: An additional game was added apart from the sample game implementation. See bottom of the page.*__
+
 #### Sample game log
 
 ```
@@ -131,7 +133,7 @@ I chose the following definitions:
  * `Item`s can be added to an `ItemHolder` and removed from it
  * `ItemHolder` knows how to *match* `Item`s with another `ItemHolder`.
  * To *match* `Item`s of one `ItemHolder` to another means that, for specific conditions in the game (`Event`s and `Action`s), the first `ItemHolder` tries to pair own `Item`s that might interact with the second `ItemHolder`'s `Item`s. The *match* can be applied to all `Item`s held by another `ItemHolder` or only to a specific subset. In the game it could mean, for instance, that having several `Item`s which the player could collect, the player may decide to only collect one or some of them, perform some other actions, and then collect the rest with possibly a different result (or effect). This adds flexibility to the game script design, making possible more sophisticated scenarios. __Note: To find matching `Item`s doesn't imply performing actions, i.e. if the player *can* collect a key, the pick-up *doesn't happen automatically*: the developer should specify explicitly the way (defining a `GameAction`) in which the player starts holding the key and the room stops holding it (via addItems() and removeItems()).__
- * Though not used in the sample game, an `ItemHolder` can contain another `ItemHolder` as `Item`, e.g. a `Room` might contain a *vault* (`Item` and `ItemHolder` at the same time), and the player could *match* the `Room`s door with one key and the *vault's* door with another key.
+ * An `ItemHolder` can contain another `ItemHolder` as `Item`, e.g. a `Room` might contain a *vault* (`Item` and `ItemHolder` at the same time), and the player could *match* the `Room`s door with one key and the *vault's* door with another key.
 
 
 ### Player
@@ -155,6 +157,7 @@ The `Game` contains the following actions:
  * Current view: which returns the feedback of what surrounds the player
  * Move player: an intent to change `Player`'s position to another position. In order the intent to succeed, the new position should be *valid* and, if any `Item` is associated to the move, the `Player` should hold the matching `Item`. *Valid* position means that the `Room` which is `Player`'s current position has a `Neighbour` in the same `Direction` as the move that is being made.
  * Pick up item: an intent to remove an `Item` from it's current `ItemHolder` and add it to `Player`. The intent will succeed if the picked up `Item` has no other `Item` specified for match; in case it has one, the `Player` should hold it.
+ * Open item: an intent to open an `Item`. The intent will succeed if the `Item` is `ItemHolder` as well, and if the player holds the matching `Item`s, in case they are required. *Note: This feature was added in the last minute, when configuring the additional game, thus it doesn't have its specific tests. The refactoring was easy and didn't imply any significant changes.*
 
 #### GameEngine
 
@@ -186,7 +189,7 @@ Following this definition, the state transition rules should be written as a num
 There are two `State`s defined for this version of the game: `Stopped` and `Playing`. Nevertheless, the created structure makes it easy extending it to more `State`s if necessary.
 
 
-## What could be improved
+## What can be improved
 
 In a production ready application, I would take away from code all the `String`s, like messages, names, tags, etc., placing them in some specific configuration files (e.g. text-adventure.properties).
 
@@ -196,6 +199,37 @@ If more than one game were supposed to be developed, the code of the basic struc
 
 When the game is initiated or before that, when preparing its parameters, it would be good to have some verification of game's termination. This would check that exists a path which makes possible to reach from the initial position in the game to the ending one. This wasn't implemented here.
 
-# How to run it
+## How to run it
 
-What is ready for play is the implementation of the sample game. In order to run it, in your IDE, choose and run `object GameApp` in `src/main/scala/adventure/GameApp.scala`.
+What is ready for play is the implementation of the sample game. In order to run it, in your IDE, choose and run `GameApp` in `src/main/scala/adventure/GameApp.scala`.
+
+# Additional game
+
+I created and added a new game, using the developed API. It has the following building/map/world:
+
+ ```
+
+         A - B - C
+
+         |  |
+
+        D ­ E - F
+
+
+ ```
+
+ * The player starts in room A
+ * The entrances to D are blocked by a locked door
+ * In room D there is a locked vault
+ * The entrance to F is blocked by a sliding iron door, too
+ * In room B lies the key that enables the player to enter to D
+ * In room C lies a book, which has a note with a code inside
+ * The note has the code to open the vault in room D
+ * In the vault there is a laser gun
+ * The laser gun serves to melt down a way through the iron door in room F
+ * The game responds to the following commands:
+     * look
+     * go [direction], where direction is one of the compass directions n, e, s, w
+     * get [item]
+     * open[item]
+ * The game ends when the player manages to reach room F
