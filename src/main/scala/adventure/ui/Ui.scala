@@ -24,7 +24,7 @@ trait Ui extends GameEngine with Terminal {
   def printHelp(): Unit = {
     println("=== Please use the following commands: ===\n\n" +
       "1. 'look' - to see what's around\n" +
-      "2. 'go n' - to go North (s = South, e = East, w = West\n" +
+      "2. 'go n' - to go North (s = South, e = East, w = West)\n" +
       "3. 'get key' - to pick up a key (or anything able to be picked up)\n" +
       "4. 'open book' - to open a book (or anything able to open)\n" +
       "5. 'exit' - to quit playing\n\n"
