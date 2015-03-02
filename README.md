@@ -4,15 +4,15 @@
 
 ```
 
-        E
+          E
 
-        |
+         |
 
-        A­B
+        A ­  B
 
-        | |
+        |   |
 
-        D­C
+       D ­ C
 ```
 
 * The player starts in room A
@@ -211,9 +211,9 @@ I created and added a new game, using the developed API. It has the following bu
 
          A - B - C
 
-         |  |
+        |   |
 
-        D ­ E - F
+       D ­ E - F
 
 
  ```
@@ -221,7 +221,7 @@ I created and added a new game, using the developed API. It has the following bu
  * The player starts in room A
  * The entrances to D are blocked by a locked door
  * In room D there is a locked vault
- * The entrance to F is blocked by a sliding iron door, too
+ * The entrance to F is blocked by a sliding iron door
  * In room B lies the key that enables the player to enter to D
  * In room C lies a book, which has a note with a code inside
  * The note has the code to open the vault in room D
